@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+</head>
+
+<body>
+
+    <script src="https://www.amcharts.com/lib/3/amcharts.js" type="text/javascript"></script>
+    <script src="https://www.amcharts.com/lib/3/serial.js" type="text/javascript"></script>
+    <script src="https://www.amcharts.com/lib/3/amstock.js" type="text/javascript"></script>
+    <script src="https://code.jquery.com/jquery-2.2.0.min.js" type="text/javascript"></script>
+
+    <div>
+        <h3 class="text-center">Air temperature</h3>
+        <div id="%CHART%_sensorPiTemp" style="width: 100%; height: 400px; border-radius: 10px; background-color:rgba(63, 63, 79, 0.25);color:red;"></div>
+    </div>
+
+    <script type="text/javascript">
+        var chartTemp;
+        var chartTempData = [];
+        var chartTempCursor;
+
+        function generateSensorPiData() {
+            $.ajaxSetup({
+                async: false
+            });
+            var sensorPiApi = "path to s3 json file";
+            $.getJSON(sensorPiApi, function (json) {
+                json.sort(function (a, b) {
+                    return a.timestamp - b.timestamp;
+                })
+                for (i = 0; i < json.length; i++) {
+                    chartTempData.push({
+                        timestamp: json[i].timestamp,
+                        temp: json[i].temp
+                    })
+                }
+            })
+        }
+
+        function getLastSensorPiData() {
+            $.ajaxSetup({
+                async: false
+            });
+            var last_element = [];
+            var sensorPiApi = "path to s3 json file";
+            $.getJSON(sensorPiApi, function (json) {
+
+                last_element = json[json.length - 1];
+
+            });
+            return last_element;
+        }
+
+        // create chart
+        AmCharts.ready(function () {
+            generateSensorPiData();
+
+            // SERIAL CHART    
+            chartTemp = new AmCharts.AmSerialChart();
+            chartTemp.pathToImages = "http://www.amcharts.com/lib/images/";
+            chartTemp.marginTop = 10;
+            chartTemp.marginBottom = 10;
+            chartTemp.marginRight = 30;
+            chartTemp.autoMarginOffset = 20;
+            chartTemp.zoomOutButton = {
+                backgroundColor: '#000000',
+                backgroundAlpha: 0.15
+            };
+            chartTemp.legend = {
+                "equalWidths": true,
+                "useGraphSettings": true,
+                "align": "left",
+                "valueAlign": "left",
+                "valueText": "[[value]] °C",
+                "valueWidth": 100
+            };
+            chartTemp.dataProvider = chartTempData;
+            chartTemp.categoryField = "timestamp";
+
+            var categoryAxis = chartTemp.categoryAxis;
+            categoryAxis.parseDates = true;
+            categoryAxis.minPeriod = "ss";
+            categoryAxis.dashLength = 1;
+            categoryAxis.gridAlpha = 0.15;
+            categoryAxis.equalSpacing = true;
+            categoryAxis.axisColor = "#b2b2b2";
+
+            var valueAxis = new AmCharts.ValueAxis();
+            valueAxis.axisAlpha = 0.2;
+            valueAxis.dashLength = 1;
+            valueAxis.position = "left";
+            valueAxis.axisColor = "#b2b2b2";
+            valueAxis.minMaxMultiplier = 1.5;
+            valueAxis.precision = 1;
+            valueAxis.unit = " °C";
+            chartTemp.addValueAxis(valueAxis);
+
+            var graph = new AmCharts.AmGraph();
+            graph.id = "SensorPiTemp"
+            graph.title = "SensorPi Temp";
+            graph.valueField = "temp";
+            graph.balloonText = "[[category]]<br/><b><span style='font-size:14px;'>[[value]] °C</span></b>";
+            graph.balloonDateFormat = "HH:NN:SS";
+            graph.bullet = "round";
+            graph.fillAlphas = 0.07;
+            graph.bulletBorderColor = "#FFFFFF";
+            graph.bulletBorderThickness = 2;
+            graph.lineThickness = 1.1;
+            graph.type = "smoothedLine";
+            graph.lineColor = "#d48e00";
+            graph.negativeLineColor = "#00ced4";
+            graph.hideBulletsCount = 50;
+            graph.useLineColorForBulletBorder = true;
+            chartTemp.addGraph(graph);
+
+            chartTempCursor = new AmCharts.ChartCursor();
+            chartTempCursor.cursorPosition = "middle";
+            chartTempCursor.pan = false;
+            chartTempCursor.valueLineEnabled = true;
+            chartTempCursor.valueLineBalloonEnabled = true;
+            chartTempCursor.categoryBalloonDateFormat = "HH:NN:SS";
+            chartTempCursor.categoryBalloonColor = "#555353";
+            chartTempCursor.cursorColor = "#555353";
+            chartTemp.addChartCursor(chartTempCursor);
+
+            var chartTempScrollbar = new AmCharts.ChartScrollbar();
+            chartTempScrollbar.graph = graph;
+            chartTempScrollbar.scrollbarHeight = 40;
+            chartTempScrollbar.color = "#FFFFFF";
+            chartTempScrollbar.autoGridCount = true;
+            chartTempScrollbar.enabled = false;
+            chartTemp.addChartScrollbar(chartTempScrollbar);
+
+            chartTemp.write("%CHART%_sensorPiTemp");
+
+            setInterval(function () {
+                // remove datapoint from the beginning
+                chartTemp.dataProvider.shift();
+
+                var lastTemp = getLastSensorPiData();
+                chartTemp.dataProvider.push({
+                    timestamp: new Date(lastTemp.timestamp),
+                    temp: lastTemp.temp
+                });
+                chartTemp.validateData();
+            }, 4000);
+        });
+    </script>
+</body>
+
+</html>

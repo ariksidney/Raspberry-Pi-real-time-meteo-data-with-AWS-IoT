@@ -1,3 +1,18 @@
+## What you need ##
+
+* Raspberry Pi 2 Model B
+
+* SensHat for Raspberry Pi
+
+* AWS Account
+
+#### Used Python Libraries ####
+
+* paho mqtt client
+
+* sense_hat
+
+
 AWS IoT documentation: [AWS IoT](http://docs.aws.amazon.com/iot/latest/developerguide/iot-quickstart.html)
 
 To connect our "Thing" to the IoT Service from Amazon we need to do a few steps.
@@ -13,6 +28,8 @@ To connect our "Thing" to the IoT Service from Amazon we need to do a few steps.
 5. Create a secure Communication
 
 6. Test it
+
+7. amCharts integration
 
 ## Create the Thing ##
 Head over to the AWS IoT Dashboard and click on "Create a resource" and then "Create a thing". Name the thing "sensorPi" for example.
@@ -237,7 +254,7 @@ hnacRHr2lVz2XTIIM6RUthg/aFzyQkqFOFSDX9HoLPKsEdao7WNq
 
 ```
 
-### Test it ###
+## Test it ##
 
 * Copy iot_send_to_lambda.py over to the Raspberry Pi.
 
@@ -252,3 +269,7 @@ aws iot describe-endpoint
 * Change the topic on which to publish.
 
 * Let it run and check your DynamoDB table and S3 bucket.
+
+## amCharts integration ##
+
+* Just download the chart.html and change the two URLs to the one from your S3 json file.
